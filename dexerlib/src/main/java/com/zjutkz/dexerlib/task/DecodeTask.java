@@ -41,6 +41,8 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer typeList;
     private static ByteBuffer stringData;
 
+    private static List<String> allClasses = new ArrayList<>();
+    private static List<String> allMethods = new ArrayList<>();
     private static Map<String,Integer> name2Id = new HashMap<>();
 
     @Override
@@ -99,6 +101,18 @@ public class DecodeTask extends DefaultTask{
         stringData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         encodedArrayItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         typeList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+
+        preFetch();
+    }
+
+    private static void preFetch() {
+        getAllClassNames();
+        getAllMethodNames();
+
+        int clzSize = allClasses.size();
+        int methodSize = allMethods.size();
+
+        Log.d(TAG, "There are " + clzSize + " classes with " + methodSize + " methods.");
     }
 
     private static boolean isDexFile(int magic, int version) {
@@ -151,8 +165,12 @@ public class DecodeTask extends DefaultTask{
     }
 
     public static List<String> getAllMethodNames(){
+        if(allMethods.size() != 0){
+            return allMethods;
+        }
         List<String> names = new ArrayList<>(method_ids_size);
         ByteBuffer buffer = methodId;
+        restore(buffer);
         for (int mid = 0; mid < method_ids_size; mid++) {
             buffer.position(mid * 8);
             // skip class_idx
@@ -161,22 +179,35 @@ public class DecodeTask extends DefaultTask{
             String methodName = getString(buffer.getInt());
             names.add(methodName);
         }
+        allMethods = names;
         return names;
     }
 
     public static List<String> getAllClassNames() {
+        if(allClasses.size() != 0){
+            return allClasses;
+        }
         List<String> names = new ArrayList<>(class_def_size);
         ByteBuffer buffer = classDef;
+        restore(buffer);
         for (int cid = 0; cid < class_def_size; cid++) {
             buffer.position(cid * 32);
             String className = getType(buffer.getInt());
             names.add(className);
         }
+        allClasses = names;
         return names;
+    }
+
+    public static void clearAllData(){
+        allClasses.clear();
+        allMethods.clear();
+        name2Id.clear();
     }
     
     private static void getFileNames() {
         ByteBuffer buffer = classDef;
+        restore(buffer);
         for (int cid = 0; cid < class_def_size; cid++) {
             int class_idx = buffer.getInt();
             // skip access_flags

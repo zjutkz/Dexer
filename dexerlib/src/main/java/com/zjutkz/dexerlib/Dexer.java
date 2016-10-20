@@ -19,8 +19,6 @@ public class Dexer {
 
     private static final String DECODE_THREAD = "decode_thread";
 
-    private Dexer instance;
-
     private DecodeThread mDecodeThread;
     private Handler mDecodeHandler;
 
@@ -106,5 +104,9 @@ public class Dexer {
                 }
             }
         });
+    }
+
+    public void clearCache(){
+        DecodeTask.clearAllData();
     }
 }
