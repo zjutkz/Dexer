@@ -33,4 +33,10 @@
         android:layout_height="wrap_content"
         android:text="get all methods in class"
         android:onClick="get_all_methods_in_class"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="has method,class"
+        android:onClick="has_method_and_class"/>
 </LinearLayout>

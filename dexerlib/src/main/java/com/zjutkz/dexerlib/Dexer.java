@@ -106,6 +106,28 @@ public class Dexer {
         });
     }
 
+    public void hasClass(final String clzName,final OnFetchDataListener listener){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                if(listener != null){
+                    listener.onFetchDataSuccess(DecodeTask.hasClass(clzName));
+                }
+            }
+        });
+    }
+
+    public void hasMethods(final String clzName,final String methodName,final OnFetchDataListener listener){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                if(listener != null){
+                    listener.onFetchDataSuccess(DecodeTask.hasMethod(clzName,methodName));
+                }
+            }
+        });
+    }
+
     public void clearCache(){
         DecodeTask.clearAllData();
     }

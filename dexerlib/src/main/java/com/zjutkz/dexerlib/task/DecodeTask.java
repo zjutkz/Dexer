@@ -43,6 +43,7 @@ public class DecodeTask extends DefaultTask{
 
     private static List<String> allClasses = new ArrayList<>();
     private static List<String> allMethods = new ArrayList<>();
+    private static Map<String,List<String>> clz2methods = new HashMap<>();
     private static Map<String,Integer> name2Id = new HashMap<>();
 
     @Override
@@ -123,6 +124,9 @@ public class DecodeTask extends DefaultTask{
         if(name2Id.size() == 0){
             getFileNames();
         }
+        if(clz2methods.containsKey(clzName)){
+            return clz2methods.get(clzName);
+        }
         List<String> allMethods = new ArrayList<>();
         Integer clzId = name2Id.get(clzName);
         if(clzId != null){
@@ -131,6 +135,19 @@ public class DecodeTask extends DefaultTask{
         return allMethods;
     }
 
+    public static boolean hasMethod(String clzName,String methodName){
+        List<String> allMethods = getAllMethodsInClass(clzName);
+        return allMethods.contains(methodName);
+    }
+
+    public static boolean hasClass(String clzName){
+        if(name2Id.size() != 0){
+            return name2Id.containsKey(clzName);
+        }
+
+        getFileNames();
+        return name2Id.containsKey(clzName);
+    }
 
     private static ByteBuffer slice(ByteBuffer in, int offset, int length) {
         in.position(offset);
@@ -157,7 +174,7 @@ public class DecodeTask extends DefaultTask{
                 // skip proto_idx
                 skip(buffer,2);
                 String methodName = getString(buffer.getInt());
-                names.add(methodName);
+                names.add(methodName.trim());
             }
 
         }
@@ -173,11 +190,12 @@ public class DecodeTask extends DefaultTask{
         restore(buffer);
         for (int mid = 0; mid < method_ids_size; mid++) {
             buffer.position(mid * 8);
-            // skip class_idx
+            int clzId = buffer.getShort();
+            String clzName = getType(clzId);
             // skip proto_idx
-            skip(buffer,2 + 2);
+            skip(buffer,2);
             String methodName = getString(buffer.getInt());
-            names.add(methodName);
+            names.add(clzName + "=======>" + methodName);
         }
         allMethods = names;
         return names;

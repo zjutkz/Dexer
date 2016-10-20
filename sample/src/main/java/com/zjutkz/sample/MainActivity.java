@@ -69,6 +69,36 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void has_method_and_class(View view){
+        dexer.hasClass("MainActivity", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "dex file has MainActivity: " + (boolean)data);
+            }
+        });
+
+        dexer.hasClass("MainActivity2", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "dex file has MainActivity2: " + (boolean)data);
+            }
+        });
+
+        dexer.hasMethods("MainActivity", "get_all_methods_in_class", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "MainActivity has method get_all_methods_in_class: " + (boolean)data);
+            }
+        });
+
+        dexer.hasMethods("MainActivity", "get_all_methods_in_class2", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "MainActivity has method get_all_methods_in_class2: " + (boolean)data);
+            }
+        });
+    }
+
     private byte[] stream2byte(InputStream src) throws IOException {
         ByteArrayOutputStream dest = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];
