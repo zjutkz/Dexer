@@ -18,7 +18,7 @@ allprojects {
 ```
 
 ```groovy
-compile 'com.github.zjutkz:Dexer:1.0'
+compile 'com.github.zjutkz:Dexer:1.1'
 ```
 
 
