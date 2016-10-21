@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
+    
     private byte[] stream2byte(InputStream src) throws IOException {
         ByteArrayOutputStream dest = new ByteArrayOutputStream();
         byte[] buffer = new byte[4096];

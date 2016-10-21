@@ -12,6 +12,7 @@ public class Class {
     public String class_name;
     public int access_flags;
     public String super_class_name;
+    public Class super_class;
     public List<String> interfaces;
     public String source_file_name;
 

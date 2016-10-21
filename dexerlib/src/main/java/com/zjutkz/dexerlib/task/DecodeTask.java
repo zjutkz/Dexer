@@ -44,6 +44,7 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer typeList;
     private static ByteBuffer stringData;
     private static ByteBuffer classData;
+    private static ByteBuffer codeData;
 
     private static SparseArray<Class> id2class = new SparseArray<>();
     private static List<Class> allClasses = new ArrayList<>();
@@ -107,6 +108,7 @@ public class DecodeTask extends DefaultTask{
         stringData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         typeList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         classData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        codeData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
 
         preFetch();
     }
@@ -248,6 +250,11 @@ public class DecodeTask extends DefaultTask{
             id2class.append(class_idx,clz);
             clzs.add(clz);
         }
+        for(Class clz : allClasses){
+            if(!TextUtils.isEmpty(clz.super_class_name)){
+                clz.super_class = getClass(clz.super_class_name);
+            }
+        }
         allClasses = clzs;
         return clzs;
     }
@@ -306,12 +313,12 @@ public class DecodeTask extends DefaultTask{
         int method_access_flags = readULeb128(buffer);
         int code_off = readULeb128(buffer);
         int method_id = lastMethod + diff;
-        methods.add(getMethod(method_id));
+        methods.add(getMethod(method_id,code_off));
 
         return method_id;
     }
 
-    private static Method getMethod(int id) {
+    private static Method getMethod(int id,int offset) {
         methodId.position(id * 8);
         int class_idx = methodId.getShort();
         int proto_idx = 0xFFFF & methodId.getShort();
