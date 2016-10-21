@@ -35,7 +35,6 @@ public class DecodeTask extends DefaultTask{
     private static int method_ids_size;
     private static int class_def_size;
 
-    private static ByteBuffer encodedArrayItem;
     private static ByteBuffer stringId;
     private static ByteBuffer typeId;
     private static ByteBuffer protoId;
@@ -46,7 +45,7 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer stringData;
     private static ByteBuffer classData;
 
-    public static SparseArray<Class> id2class = new SparseArray<>();
+    private static SparseArray<Class> id2class = new SparseArray<>();
     private static List<Class> allClasses = new ArrayList<>();
     private static List<Method> allMethods = new ArrayList<>();
     private static Map<String,Method> clz2methods = new HashMap<>();
@@ -106,7 +105,6 @@ public class DecodeTask extends DefaultTask{
 
         restore(buffer);
         stringData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
-        encodedArrayItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         typeList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         classData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
 
@@ -178,6 +176,35 @@ public class DecodeTask extends DefaultTask{
             allMethods.addAll(dest.direct_methods);
         }
         return allMethods;
+    }
+
+    public static Method getMethod(String clzName,String methodName){
+        Class destClz;
+        Integer clzId = name2Id.get(clzName);
+        if(clzId != null){
+            destClz = id2class.get(clzId,null);
+            for(Method method : destClz.direct_methods){
+                if(method.name.equals(methodName)){
+                    return method;
+                }
+            }
+            for(Method method : destClz.virtual_methods){
+                if(method.name.equals(methodName)){
+                    return method;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static Class getClass(String clzName){
+        Integer clzId = name2Id.get(clzName);
+        if(clzId != null){
+            return id2class.get(clzId,null);
+        }
+
+        return null;
     }
 
     public static List<Method> getAllMethods(){
@@ -391,7 +418,7 @@ public class DecodeTask extends DefaultTask{
         }
     }
 
-    public static int readULeb128(ByteBuffer in) {
+    private static int readULeb128(ByteBuffer in) {
         int value = 0;
         int count = 0;
         int b = in.get();

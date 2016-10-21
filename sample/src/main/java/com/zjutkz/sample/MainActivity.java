@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.zjutkz.dexerlib.Dexer;
 import com.zjutkz.dexerlib.dex.Class;
+import com.zjutkz.dexerlib.dex.Field;
 import com.zjutkz.dexerlib.dex.Method;
 
 import java.io.ByteArrayOutputStream;
@@ -97,6 +98,36 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFetchDataSuccess(Object data) {
                 Log.d(TAG, "MainActivity has method get_all_methods_in_class2: " + (boolean)data);
+            }
+        });
+    }
+
+    public void get_class(View view){
+        dexer.getClass("MainActivity", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                Log.d(TAG, clz.class_name + " " + clz.super_class_name);
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, field.name);
+                }
+            }
+        });
+    }
+
+    public void get_method(View view){
+        dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Method method = (Method)data;
+                Log.d(TAG, method.name);
+                Log.d(TAG, method.returnType);
+                for(String type : method.paramTypes){
+                    Log.d(TAG, type);
+                }
             }
         });
     }
