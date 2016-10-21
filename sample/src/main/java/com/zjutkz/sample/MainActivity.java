@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.zjutkz.dexerlib.Dexer;
+import com.zjutkz.dexerlib.dex.Class;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,9 +38,9 @@ public class MainActivity extends AppCompatActivity {
         dexer.getAllClasses(new Dexer.OnFetchDataListener() {
             @Override
             public void onFetchDataSuccess(Object data) {
-                List<String> allClasses = (List<String>)data;
-                for(String className : allClasses){
-                    Log.d(TAG, className);
+                List<Class> allClasses = (List<Class>)data;
+                for(Class clz : allClasses){
+                    Log.d(TAG, clz.class_name);
                 }
             }
         });

@@ -1,13 +1,16 @@
 package com.zjutkz.dexerlib.dex;
 
-import java.util.List;
-
 /**
  * Created by kangzhe on 16/10/21.
  */
 
 public class Field {
 
-    public List<String> types;
+    public String type;
     public String name;
+
+    public Field(String type,String name){
+        this.type = type;
+        this.name = name;
+    }
 }

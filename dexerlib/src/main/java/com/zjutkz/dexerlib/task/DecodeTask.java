@@ -3,6 +3,9 @@ package com.zjutkz.dexerlib.task;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.zjutkz.dexerlib.dex.Class;
+import com.zjutkz.dexerlib.dex.Field;
+import com.zjutkz.dexerlib.dex.Method;
 import com.zjutkz.dexerlib.util.UTF8;
 
 import java.io.UTFDataFormatException;
@@ -40,8 +43,9 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer classDef;
     private static ByteBuffer typeList;
     private static ByteBuffer stringData;
+    private static ByteBuffer classData;
 
-    private static List<String> allClasses = new ArrayList<>();
+    private static List<Class> allClasses = new ArrayList<>();
     private static List<String> allMethods = new ArrayList<>();
     private static Map<String,List<String>> clz2methods = new HashMap<>();
     private static Map<String,Integer> name2Id = new HashMap<>();
@@ -102,6 +106,7 @@ public class DecodeTask extends DefaultTask{
         stringData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         encodedArrayItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         typeList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        classData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
 
         preFetch();
     }
@@ -201,26 +206,132 @@ public class DecodeTask extends DefaultTask{
         return names;
     }
 
-    public static List<String> getAllClasses() {
-        if(allClasses.size() != 0){
-            return allClasses;
-        }
-        List<String> names = new ArrayList<>(class_def_size);
-        ByteBuffer buffer = classDef;
-        restore(buffer);
-        for (int cid = 0; cid < class_def_size; cid++) {
-            buffer.position(cid * 32);
-            String className = getType(buffer.getInt());
-            names.add(className);
-        }
-        allClasses = names;
-        return names;
-    }
-
     public static void clearAllData(){
         allClasses.clear();
         allMethods.clear();
         name2Id.clear();
+    }
+
+    public static List<Class> getAllClasses() {
+        if(allClasses.size() != 0){
+            return allClasses;
+        }
+        List<Class> clzs = new ArrayList<>(class_def_size);
+        for (int cid = 0; cid < class_def_size; cid++) {
+            Class clz = new Class();
+            classDef.position(cid * 32);
+            clz.class_name = getType(classDef.getInt());
+            clz.access_flags = classDef.getInt();
+            clz.super_class_name = getType(classDef.getInt());
+            clz.interfaces = getTypeList(classDef.getInt());
+            clz.source_file_name = getString(classDef.getInt());
+            //skip annotation
+            skip(classDef,4);
+            int class_data_off = classDef.getInt();
+            int static_values_off = classDef.getInt();
+            getFieldsAndMethods(clz,class_data_off,static_values_off);
+            clzs.add(clz);
+        }
+        allClasses = clzs;
+        return clzs;
+    }
+
+    private static void getFieldsAndMethods(Class clz, int class_data_off,int static_values_off) {
+        ByteBuffer buffer = classData;
+        buffer.position(class_data_off);
+
+        int static_fields = readULeb128(buffer);
+        int instance_fields = readULeb128(buffer);
+        int direct_methods = readULeb128(buffer);
+        int virtual_methods = readULeb128(buffer);
+
+        List<Field> staticFields = new ArrayList<>();
+        List<Field> instanceFields = new ArrayList<>();
+        List<Method> directMethods = new ArrayList<>();
+        List<Method> virtualMethods = new ArrayList<>();
+
+        int lastField = 0;
+        for (int i = 0; i < static_fields; i++) {
+            lastField = findFields(buffer,lastField,staticFields);
+        }
+
+        lastField = 0;
+        for (int i = 0; i < instance_fields; i++) {
+            lastField = findFields(buffer,lastField,instanceFields);
+        }
+
+        int lastMethod = 0;
+        for(int i = 0;i < direct_methods;i++){
+            lastMethod = findMethods(buffer,lastMethod,directMethods);
+        }
+
+        lastMethod = 0;
+        for(int i = 0;i < virtual_methods;i++){
+            lastMethod = findMethods(buffer,lastMethod,virtualMethods);
+        }
+
+        clz.static_fields = staticFields;
+        clz.instance_fields = instanceFields;
+        clz.direct_methods = directMethods;
+        clz.virtual_methods = virtualMethods;
+    }
+
+    private static int findMethods(ByteBuffer buffer, int lastMethod, List<Method> methods) {
+        if(methods == null){
+            methods = new ArrayList<>();
+        }
+
+        int diff = readULeb128(buffer);
+        skip(buffer,4 + 4);
+        int method_id = lastMethod + diff;
+        methods.add(getMethod(method_id));
+
+        return method_id;
+    }
+
+    private static Method getMethod(int id) {
+        methodId.position(id * 8);
+        skip(methodId,2);
+        int proto_idx = 0xFFFF & methodId.getShort();
+        int name_idx = methodId.getInt();
+        List<String> parameterTypes;
+        String returnType;
+
+        protoId.position(proto_idx * 12 + 4);
+
+        int return_type_idx = protoId.getInt();
+        int parameters_off = protoId.getInt();
+
+        returnType = getType(return_type_idx);
+
+        parameterTypes = getTypeList(parameters_off);
+
+        return new Method(parameterTypes,returnType,getString(name_idx));
+    }
+
+    private static int findFields(ByteBuffer buffer,int lastField,List<Field> fields) {
+        if(fields == null){
+            fields = new ArrayList<>();
+        }
+        int diff = readULeb128(buffer);
+        skip(buffer,4);
+        int field_id = lastField + diff;
+
+        fields.add(getField(lastField));
+
+        return field_id;
+    }
+
+    private static Field getField(int id) {
+        fieldId.position(id * 8);
+        skip(fieldId,2);
+        int type_idx = 0xFFFF & fieldId.getShort();
+        int name_idx = fieldId.getInt();
+
+        String type = getType(type_idx);
+        String name = getString(name_idx);
+
+        return new Field(type,name);
     }
 
     private static void getFileNames() {
@@ -246,6 +357,19 @@ public class DecodeTask extends DefaultTask{
         }
     }
 
+    private static List<String> getTypeList(int offset) {
+        if (offset == 0) {
+            return new ArrayList<>();
+        }
+        typeList.position(offset);
+        int size = typeList.getInt();
+        List<String> types = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            types.add(getType(0xFFFF & typeList.getShort()));
+        }
+        return types;
+    }
+
     private static String getType(int id) {
         if (id == -1) {
             return null;
@@ -262,7 +386,7 @@ public class DecodeTask extends DefaultTask{
         int length = readULeb128(stringData);
         try {
             StringBuilder buff = new StringBuilder(length);
-            return UTF8.decode(stringData, buff);
+            return UTF8.decode(stringData, buff).trim();
         } catch (UTFDataFormatException e) {
             e.printStackTrace();
             return "";

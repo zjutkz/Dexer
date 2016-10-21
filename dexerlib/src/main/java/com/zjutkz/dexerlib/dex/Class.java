@@ -8,14 +8,16 @@ import java.util.List;
 
 public class Class {
 
-    public int class_idx;
+    public String class_name;
     public int access_flags;
-    public Class super_class;
+    public String super_class_name;
     public List<String> interfaces;
-    public String annotation;
+    public String source_file_name;
 
-    public List<Field> fields;
-    public List<Method> methods;
+    public List<Field> static_fields;
+    public List<Field> instance_fields;
+    public List<Method> direct_methods;
+    public List<Method> virtual_methods;
 }
 
 
