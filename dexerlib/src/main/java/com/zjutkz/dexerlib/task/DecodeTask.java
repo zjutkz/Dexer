@@ -77,7 +77,7 @@ public class DecodeTask extends DefaultTask{
         // skip uint link_off
         // skip uint map_off
         skip(buffer, 4 + 20 + 4 + 4 + 4 + 4 + 4 + 4);
-        
+
         string_ids_size = buffer.getInt();
         int string_ids_off = buffer.getInt();
         type_ids_size = buffer.getInt();
@@ -89,14 +89,14 @@ public class DecodeTask extends DefaultTask{
         method_ids_size = buffer.getInt();
         int method_ids_off = buffer.getInt();
         class_def_size = buffer.getInt();
-        int class_defs_off = buffer.getInt();
+        int class_def_off = buffer.getInt();
 
         stringId = slice(buffer, string_ids_off, string_ids_size * 4);
         typeId = slice(buffer, type_ids_off, type_ids_size * 4);
         protoId = slice(buffer, proto_ids_off, proto_ids_size * 12);
         fieldId = slice(buffer, field_ids_off, field_ids_size * 8);
         methodId = slice(buffer, method_ids_off, method_ids_size * 8);
-        classDef = slice(buffer, class_defs_off, class_def_size * 32);
+        classDef = slice(buffer, class_def_off, class_def_size * 32);
 
         restore(buffer);
         stringData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
@@ -107,7 +107,7 @@ public class DecodeTask extends DefaultTask{
     }
 
     private static void preFetch() {
-        getAllClassNames();
+        getAllClasses();
         getAllMethodNames();
 
         int clzSize = allClasses.size();
@@ -201,7 +201,7 @@ public class DecodeTask extends DefaultTask{
         return names;
     }
 
-    public static List<String> getAllClassNames() {
+    public static List<String> getAllClasses() {
         if(allClasses.size() != 0){
             return allClasses;
         }
@@ -222,7 +222,7 @@ public class DecodeTask extends DefaultTask{
         allMethods.clear();
         name2Id.clear();
     }
-    
+
     private static void getFileNames() {
         ByteBuffer buffer = classDef;
         restore(buffer);
