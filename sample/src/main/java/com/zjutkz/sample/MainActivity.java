@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFetchDataSuccess(Object data) {
                 List<Class> allClasses = (List<Class>)data;
                 for(Class clz : allClasses){
-                    Log.d(TAG, clz.class_name);
+                    Log.d(TAG, clz.source_file_name);
                 }
             }
         });
@@ -103,17 +103,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void get_class(View view){
-        dexer.getClass("MainActivity", new Dexer.OnFetchDataListener() {
+        dexer.getClass("TestClass", new Dexer.OnFetchDataListener() {
             @Override
             public void onFetchDataSuccess(Object data) {
                 Class clz = (Class)data;
                 Log.d(TAG, clz.class_name + " " + clz.super_class_name);
                 for(Field field : clz.instance_fields){
-                    Log.d(TAG, field.name);
+                    Log.d(TAG, "instance field: " + field.name);
                 }
                 for(Field field : clz.static_fields){
-                    Log.d(TAG, field.name);
+                    Log.d(TAG, "static field: " + field.name);
                 }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
+            }
+        });
+
+        dexer.getClass("TestClass$InnerClass", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, "static field: " + field.name);
+                }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
+            }
+        });
+
+        dexer.getClass("TestClass$InnerClass$DoubleInnerClass", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, "static field: " + field.name);
+                }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
             }
         });
     }

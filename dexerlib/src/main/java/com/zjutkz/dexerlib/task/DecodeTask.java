@@ -245,6 +245,7 @@ public class DecodeTask extends DefaultTask{
             int static_values_off = classDef.getInt();
             getFieldsAndMethods(clz,class_data_off,static_values_off);
             if(!TextUtils.isEmpty(clz.source_file_name)){
+                replaceSourceFileName(clz);
                 name2Id.put(clz.source_file_name.split("\\.")[0],class_idx);
             }
             id2class.append(class_idx,clz);
@@ -257,6 +258,24 @@ public class DecodeTask extends DefaultTask{
         }
         allClasses = clzs;
         return clzs;
+    }
+
+    private static void replaceSourceFileName(Class clz) {
+        if(clz.class_name.contains("$")){
+            String outerClz = clz.source_file_name.split("\\.")[0];
+            String[] maybeMore = clz.class_name.split("\\$");
+            String innerClz = "";
+            for(int i = 1;i < maybeMore.length;i++){
+                if(i == 1){
+                    innerClz = maybeMore[i];
+                }else {
+                    innerClz = innerClz + "$" + maybeMore[i];
+                }
+            }
+            //exclude ";"
+            innerClz = innerClz.substring(0,innerClz.length() -1);
+            clz.source_file_name = outerClz + "$" + innerClz + ".java";
+        }
     }
 
     private static void getFieldsAndMethods(Class clz, int class_data_off,int static_values_off) {
