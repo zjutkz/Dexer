@@ -8,11 +8,17 @@ import java.util.List;
 
 public class Method {
 
+    public String className;
     public List<String> paramTypes;
     public String returnType;
     public String name;
 
-    public Method(List<String> paramTypes,String returnType,String name){
+    public Method(){
+
+    }
+
+    public Method(String className,List<String> paramTypes,String returnType,String name){
+        this.className = className;
         this.paramTypes = paramTypes;
         this.returnType = returnType;
         this.name = name;

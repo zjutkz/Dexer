@@ -7,6 +7,7 @@ import android.view.View;
 
 import com.zjutkz.dexerlib.Dexer;
 import com.zjutkz.dexerlib.dex.Class;
+import com.zjutkz.dexerlib.dex.Method;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,9 +51,9 @@ public class MainActivity extends AppCompatActivity {
         dexer.getAllMethods(new Dexer.OnFetchDataListener() {
             @Override
             public void onFetchDataSuccess(Object data) {
-                List<String> allMethods = (List<String>)data;
-                for(String methodName : allMethods){
-                    Log.d(TAG, methodName);
+                List<Method> allMethods = (List<Method>)data;
+                for(Method method : allMethods){
+                    Log.d(TAG, method.name);
                 }
             }
         });
@@ -62,9 +63,9 @@ public class MainActivity extends AppCompatActivity {
         dexer.getAllMethodsInClass("MainActivity",new Dexer.OnFetchDataListener() {
             @Override
             public void onFetchDataSuccess(Object data) {
-                List<String> allMethods = (List<String>)data;
-                for(String methodName : allMethods){
-                    Log.d(TAG, methodName);
+                List<Method> allMethods = (List<Method>)data;
+                for(Method method : allMethods){
+                    Log.d(TAG, method.name);
                 }
             }
         });

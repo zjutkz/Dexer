@@ -2,6 +2,7 @@ package com.zjutkz.dexerlib.task;
 
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.zjutkz.dexerlib.dex.Class;
 import com.zjutkz.dexerlib.dex.Field;
@@ -45,9 +46,10 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer stringData;
     private static ByteBuffer classData;
 
+    public static SparseArray<Class> id2class = new SparseArray<>();
     private static List<Class> allClasses = new ArrayList<>();
-    private static List<String> allMethods = new ArrayList<>();
-    private static Map<String,List<String>> clz2methods = new HashMap<>();
+    private static List<Method> allMethods = new ArrayList<>();
+    private static Map<String,Method> clz2methods = new HashMap<>();
     private static Map<String,Integer> name2Id = new HashMap<>();
 
     @Override
@@ -113,7 +115,6 @@ public class DecodeTask extends DefaultTask{
 
     private static void preFetch() {
         getAllClasses();
-        getAllMethodNames();
 
         int clzSize = allClasses.size();
         int methodSize = allMethods.size();
@@ -125,24 +126,23 @@ public class DecodeTask extends DefaultTask{
         return magic == MAGIC_DEX && (version == MAGIC_035 || version == MAGIC_036);
     }
 
-    public static List<String> getAllMethodsInClass(String clzName) {
-        if(name2Id.size() == 0){
-            getFileNames();
-        }
-        if(clz2methods.containsKey(clzName)){
-            return clz2methods.get(clzName);
-        }
-        List<String> allMethods = new ArrayList<>();
+    public static List<Method> getAllMethodsInClass(String clzName) {
+        List<Method> allMethods = new ArrayList<>();
         Integer clzId = name2Id.get(clzName);
         if(clzId != null){
-            allMethods = getMethodNamesWithClzName(clzId);
+            allMethods = getMethodNamesWithClzId(clzId);
         }
         return allMethods;
     }
 
     public static boolean hasMethod(String clzName,String methodName){
-        List<String> allMethods = getAllMethodsInClass(clzName);
-        return allMethods.contains(methodName);
+        List<Method> allMethods = getAllMethodsInClass(clzName);
+        for(Method method : allMethods){
+            if(method.name.equals(methodName)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean hasClass(String clzName){
@@ -170,41 +170,25 @@ public class DecodeTask extends DefaultTask{
         data.position(data.position() + pos);
     }
 
-    private static List<String> getMethodNamesWithClzName(int clzId){
-        List<String> names = new ArrayList<>(method_ids_size);
-        ByteBuffer buffer = methodId;
-        for (int mid = 0; mid < method_ids_size; mid++) {
-            buffer.position(mid * 8);
-            if(clzId == (int)buffer.getShort()){
-                // skip proto_idx
-                skip(buffer,2);
-                String methodName = getString(buffer.getInt());
-                names.add(methodName.trim());
-            }
-
+    private static List<Method> getMethodNamesWithClzId(int clzId){
+        Class dest = id2class.get(clzId,null);
+        List<Method> allMethods = new ArrayList<>();
+        if(dest != null){
+            allMethods.addAll(dest.virtual_methods);
+            allMethods.addAll(dest.direct_methods);
         }
-        return names;
+        return allMethods;
     }
 
-    public static List<String> getAllMethodNames(){
+    public static List<Method> getAllMethods(){
         if(allMethods.size() != 0){
             return allMethods;
         }
-        List<String> names = new ArrayList<>(method_ids_size);
-        ByteBuffer buffer = methodId;
-        restore(buffer);
-        for (int mid = 0; mid < method_ids_size; mid++) {
-            buffer.position(mid * 8);
-            int clzId = buffer.getShort();
-            String clzName = getType(clzId);
-            // skip proto_idx
-            skip(buffer,2);
-            String methodName = getString(buffer.getInt());
-            names.add(clzName + "=======>" + methodName);
-        }
-        allMethods = names;
-        return names;
+
+        getAllClasses();
+        return allMethods;
     }
+
 
     public static void clearAllData(){
         allClasses.clear();
@@ -220,16 +204,21 @@ public class DecodeTask extends DefaultTask{
         for (int cid = 0; cid < class_def_size; cid++) {
             Class clz = new Class();
             classDef.position(cid * 32);
-            clz.class_name = getType(classDef.getInt());
+            int class_idx = classDef.getInt();
+            clz.class_name = getType(class_idx);
             clz.access_flags = classDef.getInt();
             clz.super_class_name = getType(classDef.getInt());
             clz.interfaces = getTypeList(classDef.getInt());
             clz.source_file_name = getString(classDef.getInt());
-            //skip annotation
-            skip(classDef,4);
+            // TODO: 16/10/21 support annotation
+            int annotations_off = classDef.getInt();
             int class_data_off = classDef.getInt();
             int static_values_off = classDef.getInt();
             getFieldsAndMethods(clz,class_data_off,static_values_off);
+            if(!TextUtils.isEmpty(clz.source_file_name)){
+                name2Id.put(clz.source_file_name.split("\\.")[0],class_idx);
+            }
+            id2class.append(class_idx,clz);
             clzs.add(clz);
         }
         allClasses = clzs;
@@ -237,43 +226,47 @@ public class DecodeTask extends DefaultTask{
     }
 
     private static void getFieldsAndMethods(Class clz, int class_data_off,int static_values_off) {
-        ByteBuffer buffer = classData;
-        buffer.position(class_data_off);
+        if(class_data_off != 0){
+            ByteBuffer buffer = classData;
+            buffer.position(class_data_off);
+            int static_fields = readULeb128(buffer);
+            int instance_fields = readULeb128(buffer);
+            int direct_methods = readULeb128(buffer);
+            int virtual_methods = readULeb128(buffer);
 
-        int static_fields = readULeb128(buffer);
-        int instance_fields = readULeb128(buffer);
-        int direct_methods = readULeb128(buffer);
-        int virtual_methods = readULeb128(buffer);
+            List<Field> staticFields = new ArrayList<>();
+            List<Field> instanceFields = new ArrayList<>();
+            List<Method> directMethods = new ArrayList<>();
+            List<Method> virtualMethods = new ArrayList<>();
 
-        List<Field> staticFields = new ArrayList<>();
-        List<Field> instanceFields = new ArrayList<>();
-        List<Method> directMethods = new ArrayList<>();
-        List<Method> virtualMethods = new ArrayList<>();
+            int lastField = 0;
+            for (int i = 0; i < static_fields; i++) {
+                lastField = findFields(buffer,lastField,staticFields);
+            }
 
-        int lastField = 0;
-        for (int i = 0; i < static_fields; i++) {
-            lastField = findFields(buffer,lastField,staticFields);
+            lastField = 0;
+            for (int i = 0; i < instance_fields; i++) {
+                lastField = findFields(buffer,lastField,instanceFields);
+            }
+
+            int lastMethod = 0;
+            for(int i = 0;i < direct_methods;i++){
+                lastMethod = findMethods(buffer,lastMethod,directMethods);
+            }
+
+            lastMethod = 0;
+            for(int i = 0;i < virtual_methods;i++){
+                lastMethod = findMethods(buffer,lastMethod,virtualMethods);
+            }
+
+            clz.static_fields = staticFields;
+            clz.instance_fields = instanceFields;
+            clz.direct_methods = directMethods;
+            clz.virtual_methods = virtualMethods;
+
+            allMethods.addAll(directMethods);
+            allMethods.addAll(virtualMethods);
         }
-
-        lastField = 0;
-        for (int i = 0; i < instance_fields; i++) {
-            lastField = findFields(buffer,lastField,instanceFields);
-        }
-
-        int lastMethod = 0;
-        for(int i = 0;i < direct_methods;i++){
-            lastMethod = findMethods(buffer,lastMethod,directMethods);
-        }
-
-        lastMethod = 0;
-        for(int i = 0;i < virtual_methods;i++){
-            lastMethod = findMethods(buffer,lastMethod,virtualMethods);
-        }
-
-        clz.static_fields = staticFields;
-        clz.instance_fields = instanceFields;
-        clz.direct_methods = directMethods;
-        clz.virtual_methods = virtualMethods;
     }
 
     private static int findMethods(ByteBuffer buffer, int lastMethod, List<Method> methods) {
@@ -282,7 +275,9 @@ public class DecodeTask extends DefaultTask{
         }
 
         int diff = readULeb128(buffer);
-        skip(buffer,4 + 4);
+        // TODO: 16/10/21 support code item
+        int method_access_flags = readULeb128(buffer);
+        int code_off = readULeb128(buffer);
         int method_id = lastMethod + diff;
         methods.add(getMethod(method_id));
 
@@ -291,9 +286,11 @@ public class DecodeTask extends DefaultTask{
 
     private static Method getMethod(int id) {
         methodId.position(id * 8);
-        skip(methodId,2);
+        int class_idx = methodId.getShort();
         int proto_idx = 0xFFFF & methodId.getShort();
         int name_idx = methodId.getInt();
+
+        String clzName = getType(class_idx);
         List<String> parameterTypes;
         String returnType;
 
@@ -306,7 +303,7 @@ public class DecodeTask extends DefaultTask{
 
         parameterTypes = getTypeList(parameters_off);
 
-        return new Method(parameterTypes,returnType,getString(name_idx));
+        return new Method(clzName,parameterTypes,returnType,getString(name_idx));
     }
 
     private static int findFields(ByteBuffer buffer,int lastField,List<Field> fields) {
@@ -314,10 +311,11 @@ public class DecodeTask extends DefaultTask{
             fields = new ArrayList<>();
         }
         int diff = readULeb128(buffer);
-        skip(buffer,4);
+        // TODO: 16/10/21 support field access flag
+        int field_access_flags = readULeb128(buffer);
         int field_id = lastField + diff;
 
-        fields.add(getField(lastField));
+        fields.add(getField(field_id));
 
         return field_id;
     }
@@ -393,45 +391,16 @@ public class DecodeTask extends DefaultTask{
         }
     }
 
-    private static int readULeb128(ByteBuffer in) {
-        byte[] byteAry = in.array();
-
-        int index = 0, cur;
-        int result = byteAry[index];
-        index++;
-
-        if (byteAry.length == 1) {
-            return result;
+    public static int readULeb128(ByteBuffer in) {
+        int value = 0;
+        int count = 0;
+        int b = in.get();
+        while ((b & 0x80) != 0) {
+            value |= (b & 0x7f) << count;
+            count += 7;
+            b = in.get();
         }
-
-        if (byteAry.length == 2) {
-            cur = byteAry[index];
-            index++;
-            result = (result & 0x7f) | ((cur & 0x7f) << 7);
-            return result;
-        }
-
-        if (byteAry.length == 3) {
-            cur = byteAry[index];
-            index++;
-            result |= (cur & 0x7f) << 14;
-            return result;
-        }
-
-        if (byteAry.length == 4) {
-            cur = byteAry[index];
-            index++;
-            result |= (cur & 0x7f) << 21;
-            return result;
-        }
-
-        if (byteAry.length == 5) {
-            cur = byteAry[index];
-            index++;
-            result |= cur << 28;
-            return result;
-        }
-
-        return result;
+        value |= (b & 0x7f) << count;
+        return value;
     }
 }

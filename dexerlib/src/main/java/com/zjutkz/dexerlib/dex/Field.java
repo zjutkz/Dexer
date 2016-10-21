@@ -9,6 +9,10 @@ public class Field {
     public String type;
     public String name;
 
+    public Field(){
+
+    }
+
     public Field(String type,String name){
         this.type = type;
         this.name = name;

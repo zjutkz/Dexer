@@ -1,5 +1,6 @@
 package com.zjutkz.dexerlib.dex;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,6 +19,13 @@ public class Class {
     public List<Field> instance_fields;
     public List<Method> direct_methods;
     public List<Method> virtual_methods;
+
+    public Class(){
+        this.static_fields = new ArrayList<>();
+        this.instance_fields = new ArrayList<>();
+        this.direct_methods = new ArrayList<>();
+        this.virtual_methods = new ArrayList<>();
+    }
 }
 
 

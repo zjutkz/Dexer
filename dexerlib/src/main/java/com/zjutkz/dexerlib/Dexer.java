@@ -78,7 +78,7 @@ public class Dexer {
             @Override
             public void run() {
                 if(listener != null){
-                    listener.onFetchDataSuccess(DecodeTask.getAllMethodNames());
+                    listener.onFetchDataSuccess(DecodeTask.getAllMethods());
                 }
             }
         });
