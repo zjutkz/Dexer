@@ -139,23 +139,55 @@ public void has_method_and_class(View view){
 }
 ```
 
-5.Getting a specific class:
+5.Getting a specific class(support inner class):
 
 ```java
 public void get_class(View view){
-    dexer.getClass("MainActivity", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Class clz = (Class)data;
-            Log.d(TAG, clz.class_name + " " + clz.super_class_name);
-            for(Field field : clz.instance_fields){
-                Log.d(TAG, field.name);
+        dexer.getClass("TestClass", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                Log.d(TAG, clz.class_name + " " + clz.super_class_name);
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, "static field: " + field.name);
+                }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
             }
-            for(Field field : clz.static_fields){
-                Log.d(TAG, field.name);
+        });
+
+        dexer.getClass("TestClass$InnerClass", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, "static field: " + field.name);
+                }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
             }
-        }
-    });
+        });
+
+        dexer.getClass("TestClass$InnerClass$DoubleInnerClass", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Class clz = (Class)data;
+                for(Field field : clz.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name);
+                }
+                for(Field field : clz.static_fields){
+                    Log.d(TAG, "static field: " + field.name);
+                }
+                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "=========================================");
+            }
+        });
 }
 ```
 
@@ -163,17 +195,20 @@ public void get_class(View view){
 
 ```java
 public void get_method(View view){
-    dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Method method = (Method)data;
-            Log.d(TAG, method.name);
-            Log.d(TAG, method.returnType);
-            for(String type : method.paramTypes){
-                Log.d(TAG, type);
+        dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Method method = (Method)data;
+                Log.d(TAG, method.name);
+                Log.d(TAG, method.returnType);
+                for(String type : method.paramTypes){
+                    Log.d(TAG, type);
+                }
+                for(Annotation annotation : method.methodAnnotations){
+                    Log.d(TAG, annotation.name);
+                }
             }
-        }
-    });
+        });
 }
 ```
 
@@ -181,11 +216,9 @@ public void get_method(View view){
 
 #Todo
 
-######1.Support the annotation
+######1.Support the code item
 
-######2.Support the code item
-
-######3.Support the field access flag
+######2.Support the field access flag
 
 
 

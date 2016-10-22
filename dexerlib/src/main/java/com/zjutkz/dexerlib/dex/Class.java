@@ -21,11 +21,20 @@ public class Class {
     public List<Method> direct_methods;
     public List<Method> virtual_methods;
 
+    public List<Annotation> annotations;
+
     public Class(){
         this.static_fields = new ArrayList<>();
         this.instance_fields = new ArrayList<>();
         this.direct_methods = new ArrayList<>();
         this.virtual_methods = new ArrayList<>();
+        this.annotations = new ArrayList<>();
+    }
+
+    public void addAnnotation(Annotation annotation){
+        if(annotations != null){
+            annotations.add(annotation);
+        }
     }
 }
 

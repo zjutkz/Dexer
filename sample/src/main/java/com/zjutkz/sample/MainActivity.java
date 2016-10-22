@@ -1,11 +1,13 @@
 package com.zjutkz.sample;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
 import com.zjutkz.dexerlib.Dexer;
+import com.zjutkz.dexerlib.dex.Annotation;
 import com.zjutkz.dexerlib.dex.Class;
 import com.zjutkz.dexerlib.dex.Field;
 import com.zjutkz.dexerlib.dex.Method;
@@ -21,6 +23,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Dexer dexer;
 
+    @TestAnnotation
+    @NonNull
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -159,6 +163,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, method.returnType);
                 for(String type : method.paramTypes){
                     Log.d(TAG, type);
+                }
+                for(Annotation annotation : method.methodAnnotations){
+                    Log.d(TAG, annotation.name);
                 }
             }
         });

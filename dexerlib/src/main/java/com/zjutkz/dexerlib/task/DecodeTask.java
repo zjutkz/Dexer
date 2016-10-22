@@ -3,7 +3,10 @@ package com.zjutkz.dexerlib.task;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
+import android.util.SparseIntArray;
 
+import com.zjutkz.dexerlib.dex.Annotation;
+import com.zjutkz.dexerlib.dex.AnnotationElement;
 import com.zjutkz.dexerlib.dex.Class;
 import com.zjutkz.dexerlib.dex.Field;
 import com.zjutkz.dexerlib.dex.Method;
@@ -29,6 +32,23 @@ public class DecodeTask extends DefaultTask{
     private static final int MAGIC_035 = 0x00353330;
     private static final int MAGIC_036 = 0x00363330;
 
+    private static final int VALUE_BYTE = 0;
+    private static final int VALUE_SHORT = 2;
+    private static final int VALUE_CHAR = 3;
+    private static final int VALUE_INT = 4;
+    private static final int VALUE_LONG = 6;
+    private static final int VALUE_FLOAT = 16;
+    private static final int VALUE_DOUBLE = 17;
+    private static final int VALUE_STRING = 23;
+    private static final int VALUE_TYPE = 24;
+    private static final int VALUE_FIELD = 25;
+    private static final int VALUE_METHOD = 26;
+    private static final int VALUE_ENUM = 27;
+    private static final int VALUE_ARRAY = 28;
+    private static final int VALUE_ANNOTATION = 29;
+    private static final int VALUE_NULL = 30;
+    private static final int VALUE_BOOLEAN = 31;
+
     private static int string_ids_size;
     private static int type_ids_size;
     private static int field_ids_size;
@@ -45,11 +65,17 @@ public class DecodeTask extends DefaultTask{
     private static ByteBuffer stringData;
     private static ByteBuffer classData;
     private static ByteBuffer codeData;
+    private static ByteBuffer annotationsDirectoryItem;
+    private static ByteBuffer annotationSetItem;
+    private static ByteBuffer annotationItem;
+    private static ByteBuffer annotationSetRefList;
 
+    private static SparseIntArray fieldAnnotationPositions = new SparseIntArray();
+    private static SparseIntArray methodAnnotationPositions = new SparseIntArray();
+    private static SparseIntArray paramAnnotationPositions = new SparseIntArray();
     private static SparseArray<Class> id2class = new SparseArray<>();
     private static List<Class> allClasses = new ArrayList<>();
     private static List<Method> allMethods = new ArrayList<>();
-    private static Map<String,Method> clz2methods = new HashMap<>();
     private static Map<String,Integer> name2Id = new HashMap<>();
 
     @Override
@@ -109,6 +135,10 @@ public class DecodeTask extends DefaultTask{
         typeList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         classData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
         codeData = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        annotationsDirectoryItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        annotationSetItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        annotationItem = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
+        annotationSetRefList = buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN);
 
         preFetch();
     }
@@ -239,10 +269,10 @@ public class DecodeTask extends DefaultTask{
             clz.super_class_name = getType(classDef.getInt());
             clz.interfaces = getTypeList(classDef.getInt());
             clz.source_file_name = getString(classDef.getInt());
-            // TODO: 16/10/21 support annotation
             int annotations_off = classDef.getInt();
             int class_data_off = classDef.getInt();
             int static_values_off = classDef.getInt();
+            parseAnnotation(clz,annotations_off);
             getFieldsAndMethods(clz,class_data_off,static_values_off);
             if(!TextUtils.isEmpty(clz.source_file_name)){
                 replaceSourceFileName(clz);
@@ -258,6 +288,118 @@ public class DecodeTask extends DefaultTask{
         }
         allClasses = clzs;
         return clzs;
+    }
+
+    private static void parseAnnotation(Class clz, int annotations_off) {
+        if (annotations_off != 0) {
+            annotationsDirectoryItem.position(annotations_off);
+
+            int class_annotations_off = annotationsDirectoryItem.getInt();
+            int field_annotation_size = annotationsDirectoryItem.getInt();
+            int method_annotation_size = annotationsDirectoryItem.getInt();
+            int parameter_annotation_size = annotationsDirectoryItem.getInt();
+
+            if (class_annotations_off != 0) {
+                getAnnotationSetItem(clz,class_annotations_off);
+            }
+            for (int i = 0; i < field_annotation_size; i++) {
+                int field_idx = annotationsDirectoryItem.getInt();
+                int field_annotations_offset = annotationsDirectoryItem.getInt();
+                fieldAnnotationPositions.put(field_idx, field_annotations_offset);
+            }
+            for (int i = 0; i < method_annotation_size; i++) {
+                int method_idx = annotationsDirectoryItem.getInt();
+                int method_annotation_offset = annotationsDirectoryItem.getInt();
+                methodAnnotationPositions.put(method_idx, method_annotation_offset);
+            }
+            for (int i = 0; i < parameter_annotation_size; i++) {
+                int method_idx = annotationsDirectoryItem.getInt();
+                int parameter_annotation_offset = annotationsDirectoryItem.getInt();
+                paramAnnotationPositions.put(method_idx, parameter_annotation_offset);
+            }
+        }
+    }
+
+    private static void getAnnotationSetItem(Object injected, int annotations_off) {
+        if(annotations_off != 0){
+            ByteBuffer buffer = annotationSetItem;
+            buffer.position(annotations_off);
+            int size = buffer.getInt();
+            for (int j = 0; j < size; j++) {
+                int annotation_off = buffer.getInt();
+                Annotation annotation = getAnnotation(annotation_off);
+                if(injected instanceof Class){
+                    ((Class) injected).addAnnotation(annotation);
+                }else if(injected instanceof Field){
+                    ((Field) injected).addAnnotation(annotation);
+                }else if(injected instanceof Method){
+                    ((Method) injected).addMethodAnnotation(annotation);
+                }
+            }
+        }
+    }
+
+    private static Annotation getAnnotation(int annotation_off) {
+        ByteBuffer buffer = annotationItem;
+        buffer.position(annotation_off);
+        Annotation annotation = new Annotation();
+        int visibility = 0xFF & buffer.get();
+        int type_idx = readULeb128(buffer);
+        int size = readULeb128(buffer);
+        String type = getType(type_idx);
+        annotation.visibility = visibility;
+        annotation.name = type;
+        for (int i = 0; i < size; i++) {
+            AnnotationElement element = new AnnotationElement();
+            int name_idx = readULeb128(buffer);
+            String name = getString(name_idx);
+            Object value = readEncodedValue(buffer);
+            element.name = name;
+            element.value = value;
+            annotation.addElement(element);
+        }
+
+        return annotation;
+    }
+
+    private static Object readEncodedValue(ByteBuffer in) {
+        int b = 0xFF & in.get();
+        int type = b & 0x1f;
+        switch (type) {
+            case VALUE_BYTE:
+                return new Byte((byte) readIntBits(in, b));
+
+            case VALUE_SHORT:
+                return new Short((short) readIntBits(in, b));
+
+            case VALUE_INT:
+                return new Integer((int) readIntBits(in, b));
+
+            case VALUE_LONG:
+                return new Long(readIntBits(in, b));
+
+            case VALUE_CHAR:
+                return new Character((char) readUIntBits(in, b));
+
+            case VALUE_STRING:
+                return getString((int) readUIntBits(in, b));
+
+            case VALUE_FLOAT:
+                return Float.intBitsToFloat((int) (readFloatBits(in, b) >> 32));
+
+            case VALUE_DOUBLE:
+                return Double.longBitsToDouble(readFloatBits(in, b));
+
+            case VALUE_NULL:
+                return null;
+
+            case VALUE_BOOLEAN: {
+                return new Boolean(((b >> 5) & 0x3) != 0);
+
+            }
+            default:
+                return null;
+        }
     }
 
     private static void replaceSourceFileName(Class clz) {
@@ -356,7 +498,31 @@ public class DecodeTask extends DefaultTask{
 
         parameterTypes = getTypeList(parameters_off);
 
-        return new Method(clzName,parameterTypes,returnType,getString(name_idx));
+        Method method = new Method(clzName,parameterTypes,returnType,getString(name_idx));
+
+        Integer method_annotation_offset = methodAnnotationPositions.get(id);
+        getAnnotationSetItem(method,method_annotation_offset);
+
+        Integer parameter_annotation_offset = paramAnnotationPositions.get(id);
+        getAnnotationSetRefList(method,parameter_annotation_offset);
+
+        return method;
+    }
+
+    private static void getAnnotationSetRefList(Method method, Integer parameter_annotation_offset) {
+        if(parameter_annotation_offset != 0){
+            ByteBuffer buffer = annotationSetRefList;
+            buffer.position(parameter_annotation_offset);
+
+            int size = buffer.getInt();
+            for (int j = 0; j < size; j++) {
+                int param_annotation_offset = buffer.getInt();
+                if (param_annotation_offset == 0) {
+                    continue;
+                }
+                getAnnotationSetItem(method,param_annotation_offset);
+            }
+        }
     }
 
     private static int findFields(ByteBuffer buffer,int lastField,List<Field> fields) {
@@ -374,6 +540,7 @@ public class DecodeTask extends DefaultTask{
     }
 
     private static Field getField(int id) {
+        Field field = new Field();
         fieldId.position(id * 8);
         skip(fieldId,2);
         int type_idx = 0xFFFF & fieldId.getShort();
@@ -382,7 +549,12 @@ public class DecodeTask extends DefaultTask{
         String type = getType(type_idx);
         String name = getString(name_idx);
 
-        return new Field(type,name);
+        Integer annotation_offset = fieldAnnotationPositions.get(id);
+        getAnnotationSetItem(field,annotation_offset);
+
+        field.type = type;
+        field.name = name;
+        return field;
     }
 
     private static void getFileNames() {
@@ -455,5 +627,34 @@ public class DecodeTask extends DefaultTask{
         }
         value |= (b & 0x7f) << count;
         return value;
+    }
+
+    private static long readIntBits(ByteBuffer in, int before) {
+        int length = ((before >> 5) & 0x7) + 1;
+        long value = 0;
+        for (int j = 0; j < length; j++) {
+            value |= ((long) (0xFF & in.get())) << (j * 8);
+        }
+        int shift = (8 - length) * 8;
+        return value << shift >> shift;
+    }
+
+    private static long readUIntBits(ByteBuffer in, int before) {
+        int length = ((before >> 5) & 0x7) + 1;
+        long value = 0;
+        for (int j = 0; j < length; j++) {
+            value |= ((long) (0xFF & in.get())) << (j * 8);
+        }
+        return value;
+    }
+
+    private static long readFloatBits(ByteBuffer in, int before) {
+        int bytes = ((before >> 5) & 0x7) + 1;
+        long result = 0L;
+        for (int i = 0; i < bytes; ++i) {
+            result |= ((long) (0xFF & in.get())) << (i * 8);
+        }
+        result <<= (8 - bytes) * 8;
+        return result;
     }
 }
