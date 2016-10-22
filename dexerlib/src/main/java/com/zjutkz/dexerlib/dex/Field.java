@@ -11,19 +11,21 @@ public class Field {
 
     public String type;
     public String name;
+    public int access_flag;
     public List<Annotation> annotations;
 
     public Field(){
         this.annotations = new ArrayList<>();
     }
 
-    public Field(String type,String name){
-        this(type, name,null);
+    public Field(String type,String name,int access_flag){
+        this(type, name, access_flag, null);
     }
 
-    public Field(String type,String name,List<Annotation> annotations){
+    public Field(String type,String name,int access_flag,List<Annotation> annotations){
         this.type = type;
         this.name = name;
+        this.access_flag = access_flag;
         if(annotations == null){
             annotations = new ArrayList<>();
         }else{

@@ -530,16 +530,15 @@ public class DecodeTask extends DefaultTask{
             fields = new ArrayList<>();
         }
         int diff = readULeb128(buffer);
-        // TODO: 16/10/21 support field access flag
         int field_access_flags = readULeb128(buffer);
         int field_id = lastField + diff;
 
-        fields.add(getField(field_id));
+        fields.add(getField(field_id,field_access_flags));
 
         return field_id;
     }
 
-    private static Field getField(int id) {
+    private static Field getField(int id,int field_access_flags) {
         Field field = new Field();
         fieldId.position(id * 8);
         skip(fieldId,2);
@@ -554,6 +553,7 @@ public class DecodeTask extends DefaultTask{
 
         field.type = type;
         field.name = name;
+        field.access_flag = field_access_flags;
         return field;
     }
 

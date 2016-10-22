@@ -113,10 +113,10 @@ public class MainActivity extends AppCompatActivity {
                 Class clz = (Class)data;
                 Log.d(TAG, clz.class_name + " " + clz.super_class_name);
                 for(Field field : clz.instance_fields){
-                    Log.d(TAG, "instance field: " + field.name);
+                    Log.d(TAG, "instance field: " + field.name + " " + field.access_flag);
                 }
                 for(Field field : clz.static_fields){
-                    Log.d(TAG, "static field: " + field.name);
+                    Log.d(TAG, "static field: " + field.name + " " + field.access_flag);
                 }
                 Log.d(TAG, "" + clz.access_flags);
                 Log.d(TAG, "=========================================");
