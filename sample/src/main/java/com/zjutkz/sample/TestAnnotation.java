@@ -14,4 +14,6 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Retention(CLASS)
 @Target({METHOD, PARAMETER, FIELD})
 public @interface TestAnnotation {
+
+    int value();
 }

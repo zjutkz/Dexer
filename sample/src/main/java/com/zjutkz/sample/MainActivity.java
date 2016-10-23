@@ -8,6 +8,7 @@ import android.view.View;
 
 import com.zjutkz.dexerlib.Dexer;
 import com.zjutkz.dexerlib.dex.Annotation;
+import com.zjutkz.dexerlib.dex.AnnotationElement;
 import com.zjutkz.dexerlib.dex.Class;
 import com.zjutkz.dexerlib.dex.Field;
 import com.zjutkz.dexerlib.dex.Method;
@@ -23,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Dexer dexer;
 
-    @TestAnnotation
+    @TestAnnotation(2)
     @NonNull
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,6 +167,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 for(Annotation annotation : method.methodAnnotations){
                     Log.d(TAG, annotation.name);
+                    for(AnnotationElement element : annotation.elements){
+                        Log.d(TAG, element.name + ": " + element.value);
+                    }
                 }
             }
         });

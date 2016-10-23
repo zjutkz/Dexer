@@ -261,6 +261,7 @@ public class DecodeTask extends DefaultTask{
 
     public static void dumpDex(){
         StringBuilder sb = new StringBuilder();
+        sb.append("access_flag:" + "\n");
         sb.append(AccessFlag.dump());
         if(allClasses != null){
             for(Class clz : allClasses){
@@ -273,6 +274,7 @@ public class DecodeTask extends DefaultTask{
 
     public static void dumpDex(String filePath){
         StringBuilder sb = new StringBuilder();
+        sb.append("access_flag:" + "\n");
         sb.append(AccessFlag.dump());
         if(allClasses != null){
             for(Class clz : allClasses){
@@ -458,9 +460,25 @@ public class DecodeTask extends DefaultTask{
                 return new Boolean(((b >> 5) & 0x3) != 0);
 
             }
+            case VALUE_ENUM: {
+                return getField((int) readUIntBits(in, b),-1);
+            }
+            // TODO: 16/10/23 support array
+            /*case VALUE_ARRAY: {
+                return getEncodedArray(in);
+            }*/
             default:
                 return null;
         }
+    }
+
+    private static Object[] getEncodedArray(ByteBuffer in) {
+        int size = readULeb128(in);
+        Object[] constant = new Object[size];
+        for (int i = 0; i < size; i++) {
+            constant[i] = readEncodedValue(in);
+        }
+        return constant;
     }
 
     private static void replaceSourceFileName(Class clz) {
