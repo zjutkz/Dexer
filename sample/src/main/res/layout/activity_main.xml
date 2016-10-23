@@ -51,4 +51,10 @@
         android:layout_height="wrap_content"
         android:text="get method"
         android:onClick="get_method"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="dump"
+        android:onClick="dump"/>
 </LinearLayout>

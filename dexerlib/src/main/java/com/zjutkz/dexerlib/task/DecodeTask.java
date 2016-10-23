@@ -5,6 +5,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
+import com.zjutkz.dexerlib.dex.AccessFlag;
 import com.zjutkz.dexerlib.dex.Annotation;
 import com.zjutkz.dexerlib.dex.AnnotationElement;
 import com.zjutkz.dexerlib.dex.Class;
@@ -12,6 +13,9 @@ import com.zjutkz.dexerlib.dex.Field;
 import com.zjutkz.dexerlib.dex.Method;
 import com.zjutkz.dexerlib.util.UTF8;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.UTFDataFormatException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -230,6 +234,14 @@ public class DecodeTask extends DefaultTask{
         return null;
     }
 
+    public static int getMethodCount(){
+        if(allMethods != null){
+            return allMethods.size();
+        }
+
+        return 0;
+    }
+
     public static Class getClass(String clzName){
         Integer clzId = name2Id.get(clzName);
         if(clzId != null){
@@ -237,6 +249,55 @@ public class DecodeTask extends DefaultTask{
         }
 
         return null;
+    }
+
+    public static int getClassCount(){
+        if(allClasses != null){
+            return allClasses.size();
+        }
+
+        return 0;
+    }
+
+    public static void dumpDex(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(AccessFlag.dump());
+        if(allClasses != null){
+            for(Class clz : allClasses){
+                sb.append(clz.dump());
+            }
+        }
+
+        Log.d(TAG, sb.toString());
+    }
+
+    public static void dumpDex(String filePath){
+        StringBuilder sb = new StringBuilder();
+        sb.append(AccessFlag.dump());
+        if(allClasses != null){
+            for(Class clz : allClasses){
+                sb.append(clz.dump());
+            }
+        }
+
+        try {
+            File dump = mkFile(filePath);
+            FileWriter writer = new FileWriter(dump);
+            writer.write(sb.toString());
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static File mkFile(String filePath) throws IOException {
+        File file = new File(filePath);
+        if(!file.exists()){
+            file.createNewFile();
+        }
+
+        return file;
     }
 
     public static List<Method> getAllMethods(){
@@ -471,15 +532,15 @@ public class DecodeTask extends DefaultTask{
 
         int diff = readULeb128(buffer);
         // TODO: 16/10/21 support code item
-        int method_access_flags = readULeb128(buffer);
+        int access_flags = readULeb128(buffer);
         int code_off = readULeb128(buffer);
         int method_id = lastMethod + diff;
-        methods.add(getMethod(method_id,code_off));
+        methods.add(getMethod(method_id,access_flags,code_off));
 
         return method_id;
     }
 
-    private static Method getMethod(int id,int offset) {
+    private static Method getMethod(int id,int access_flags,int offset) {
         methodId.position(id * 8);
         int class_idx = methodId.getShort();
         int proto_idx = 0xFFFF & methodId.getShort();
@@ -498,7 +559,7 @@ public class DecodeTask extends DefaultTask{
 
         parameterTypes = getTypeList(parameters_off);
 
-        Method method = new Method(clzName,parameterTypes,returnType,getString(name_idx));
+        Method method = new Method(clzName,parameterTypes,returnType,getString(name_idx),access_flags);
 
         Integer method_annotation_offset = methodAnnotationPositions.get(id);
         getAnnotationSetItem(method,method_annotation_offset);

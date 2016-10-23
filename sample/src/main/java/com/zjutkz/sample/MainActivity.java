@@ -170,6 +170,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    public void dump(View view){
+        dexer.dumpDex("storage/sdcard0/dump.txt");
+    }
     
     private byte[] stream2byte(InputStream src) throws IOException {
         ByteArrayOutputStream dest = new ByteArrayOutputStream();

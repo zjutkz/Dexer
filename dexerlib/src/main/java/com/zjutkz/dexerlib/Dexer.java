@@ -150,6 +150,46 @@ public class Dexer {
         });
     }
 
+    public void getMethodCount(final OnFetchDataListener listener){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                if(listener != null){
+                    listener.onFetchDataSuccess(DecodeTask.getMethodCount());
+                }
+            }
+        });
+    }
+
+    public void getClassCount(final OnFetchDataListener listener){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                if(listener != null){
+                    listener.onFetchDataSuccess(DecodeTask.getClassCount());
+                }
+            }
+        });
+    }
+
+    public void dumpDex(){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                DecodeTask.dumpDex();
+            }
+        });
+    }
+
+    public void dumpDex(final String filePath){
+        getDecodeHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                DecodeTask.dumpDex(filePath);
+            }
+        });
+    }
+
     public void clearCache(){
         DecodeTask.clearAllData();
     }

@@ -22,4 +22,16 @@ public class Annotation {
             elements.add(element);
         }
     }
+
+    public String dump(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("annotation name: " + name + "\n");
+        sb.append("annotation visibility: " + visibility + "\n");
+        sb.append("============annotation elements data============" + "\n");
+        for(AnnotationElement element : elements){
+            sb.append(element.dump());
+        }
+
+        return sb.toString();
+    }
 }
