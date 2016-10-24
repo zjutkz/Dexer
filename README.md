@@ -236,6 +236,14 @@ public void dump(View view){
 
 ######1.Support the code item
 
+######2.Support array-type annotation value
+
+
+
+#Thanks
+
+[dex2jar](https://github.com/pxb1988/dex2jar)
+
 
 
 #License
