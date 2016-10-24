@@ -61,15 +61,14 @@ public Dexer(byte[] src){
 
 ```java
 public void get_all_classes(View view){
-    dexer.getAllClasses(new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            List<Class> allClasses = (List<Class>)data;
-            for(Class clz : allClasses){
-                Log.d(TAG, clz.class_name);
+        dexer.getAllClasses(new Dexer.OnFetchDataListener<List<Class>>() {
+            @Override
+            public void onFetchDataSuccess(List<Class> data) {
+                for(Class clz : data){
+                    Log.d(TAG, clz.source_file_name);
+                }
             }
-        }
-    });
+        });
 }
 ```
 
@@ -77,15 +76,14 @@ public void get_all_classes(View view){
 
 ```java
 public void get_all_methods(View view){
-    dexer.getAllMethods(new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            List<Method> allMethods = (List<Method>)data;
-            for(Method method : allMethods){
-                Log.d(TAG, method.name);
+        dexer.getAllMethods(new Dexer.OnFetchDataListener<List<Method>>() {
+            @Override
+            public void onFetchDataSuccess(List<Method> data) {
+                for(Method method : data){
+                    Log.d(TAG, method.name);
+                }
             }
-        }
-    });
+        });
 }
 ```
 
@@ -93,49 +91,49 @@ public void get_all_methods(View view){
 
 ```java
 public void get_all_methods_in_class(View view){
-    dexer.getAllMethodsInClass("MainActivity",new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            List<Method> allMethods = (List<Method>)data;
-            for(Method method : allMethods){
-                Log.d(TAG, method.name);
+        dexer.getAllMethodsInClass("MainActivity",new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                List<Method> allMethods = (List<Method>)data;
+                for(Method method : allMethods){
+                    Log.d(TAG, method.name);
+                }
             }
-        }
-    });
+        });
 }
 ```
 
-4.Judge if this .dex file has a particular class or method:
+4.Judging if this .dex file has a particular class or method:
 
 ```java
 public void has_method_and_class(View view){
-    dexer.hasClass("MainActivity", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "dex file has MainActivity: " + (boolean)data);
-        }
-    });
+        dexer.hasClass("MainActivity", new Dexer.OnFetchDataListener<Boolean>() {
+            @Override
+            public void onFetchDataSuccess(Boolean data) {
+                Log.d(TAG, "dex file has MainActivity: " + (boolean)data);
+            }
+        });
 
-    dexer.hasClass("MainActivity2", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "dex file has MainActivity2: " + (boolean)data);
-        }
-    });
+        dexer.hasClass("MainActivity2", new Dexer.OnFetchDataListener<Boolean>() {
+            @Override
+            public void onFetchDataSuccess(Boolean data) {
+                Log.d(TAG, "dex file has MainActivity2: " + data);
+            }
+        });
 
-    dexer.hasMethods("MainActivity", "get_all_methods_in_class", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "MainActivity has method get_all_methods_in_class: " + (boolean)data);
-        }
-    });
+        dexer.hasMethods("MainActivity", "get_all_methods_in_class", new Dexer.OnFetchDataListener<Boolean>() {
+            @Override
+            public void onFetchDataSuccess(Boolean data) {
+                Log.d(TAG, "MainActivity has method get_all_methods_in_class: " + data);
+            }
+        });
 
-    dexer.hasMethods("MainActivity", "get_all_methods_in_class2", new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "MainActivity has method get_all_methods_in_class2: " + (boolean)data);
-        }
-    });
+        dexer.hasMethods("MainActivity", "get_all_methods_in_class2", new Dexer.OnFetchDataListener<Boolean>() {
+            @Override
+            public void onFetchDataSuccess(Boolean data) {
+                Log.d(TAG, "MainActivity has method get_all_methods_in_class2: " + data);
+            }
+        });
 }
 ```
 
@@ -143,48 +141,45 @@ public void has_method_and_class(View view){
 
 ```java
 public void get_class(View view){
-        dexer.getClass("TestClass", new Dexer.OnFetchDataListener() {
+        dexer.getClass("TestClass", new Dexer.OnFetchDataListener<Class>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                Class clz = (Class)data;
-                Log.d(TAG, clz.class_name + " " + clz.super_class_name);
-                for(Field field : clz.instance_fields){
-                    Log.d(TAG, "instance field: " + field.name);
+            public void onFetchDataSuccess(Class data) {
+                Log.d(TAG, data.class_name + " " + data.super_class_name);
+                for(Field field : data.instance_fields){
+                    Log.d(TAG, "instance field: " + field.name + " " + field.access_flag);
                 }
-                for(Field field : clz.static_fields){
-                    Log.d(TAG, "static field: " + field.name);
+                for(Field field : data.static_fields){
+                    Log.d(TAG, "static field: " + field.name + " " + field.access_flag);
                 }
-                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "" + data.access_flags);
                 Log.d(TAG, "=========================================");
             }
         });
 
-        dexer.getClass("TestClass$InnerClass", new Dexer.OnFetchDataListener() {
+        dexer.getClass("TestClass$InnerClass", new Dexer.OnFetchDataListener<Class>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                Class clz = (Class)data;
-                for(Field field : clz.instance_fields){
+            public void onFetchDataSuccess(Class data) {
+                for(Field field : data.instance_fields){
                     Log.d(TAG, "instance field: " + field.name);
                 }
-                for(Field field : clz.static_fields){
+                for(Field field : data.static_fields){
                     Log.d(TAG, "static field: " + field.name);
                 }
-                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "" + data.access_flags);
                 Log.d(TAG, "=========================================");
             }
         });
 
-        dexer.getClass("TestClass$InnerClass$DoubleInnerClass", new Dexer.OnFetchDataListener() {
+        dexer.getClass("TestClass$InnerClass$DoubleInnerClass", new Dexer.OnFetchDataListener<Class>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                Class clz = (Class)data;
-                for(Field field : clz.instance_fields){
+            public void onFetchDataSuccess(Class data) {
+                for(Field field : data.instance_fields){
                     Log.d(TAG, "instance field: " + field.name);
                 }
-                for(Field field : clz.static_fields){
+                for(Field field : data.static_fields){
                     Log.d(TAG, "static field: " + field.name);
                 }
-                Log.d(TAG, "" + clz.access_flags);
+                Log.d(TAG, "" + data.access_flags);
                 Log.d(TAG, "=========================================");
             }
         });
@@ -195,17 +190,20 @@ public void get_class(View view){
 
 ```java
 public void get_method(View view){
-        dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener() {
+        dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener<Method>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                Method method = (Method)data;
-                Log.d(TAG, method.name);
-                Log.d(TAG, method.returnType);
-                for(String type : method.paramTypes){
+            public void onFetchDataSuccess(Method data) {
+                Log.d(TAG, data.name);
+                Log.d(TAG, "" + data.access_flag);
+                Log.d(TAG, data.returnType);
+                for(String type : data.paramTypes){
                     Log.d(TAG, type);
                 }
-                for(Annotation annotation : method.methodAnnotations){
+                for(Annotation annotation : data.methodAnnotations){
                     Log.d(TAG, annotation.name);
+                    for(AnnotationElement element : annotation.elements){
+                        Log.d(TAG, element.name + ": " + element.value);
+                    }
                 }
             }
         });
@@ -234,19 +232,19 @@ public void dump(View view){
 
 ```java
 public void get_count(View view){
-    dexer.getClassCount(new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "classes count: " + data);
-        }
-    });
+        dexer.getClassCount(new Dexer.OnFetchDataListener<Integer>() {
+            @Override
+            public void onFetchDataSuccess(Integer data) {
+                Log.d(TAG, "classes count: " + data);
+            }
+        });
 
-    dexer.getMethodCount(new Dexer.OnFetchDataListener() {
-        @Override
-        public void onFetchDataSuccess(Object data) {
-            Log.d(TAG, "methods count: " + data);
-        }
-    });
+        dexer.getMethodCount(new Dexer.OnFetchDataListener<Integer>() {
+            @Override
+            public void onFetchDataSuccess(Integer data) {
+                Log.d(TAG, "methods count: " + data);
+            }
+        });
 }
 ```
 

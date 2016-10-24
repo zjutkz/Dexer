@@ -42,11 +42,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void get_all_classes(View view){
-        dexer.getAllClasses(new Dexer.OnFetchDataListener() {
+        dexer.getAllClasses(new Dexer.OnFetchDataListener<List<Class>>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                List<Class> allClasses = (List<Class>)data;
-                for(Class clz : allClasses){
+            public void onFetchDataSuccess(List<Class> data) {
+                for(Class clz : data){
                     Log.d(TAG, clz.source_file_name);
                 }
             }
@@ -54,11 +53,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void get_all_methods(View view){
-        dexer.getAllMethods(new Dexer.OnFetchDataListener() {
+        dexer.getAllMethods(new Dexer.OnFetchDataListener<List<Method>>() {
             @Override
-            public void onFetchDataSuccess(Object data) {
-                List<Method> allMethods = (List<Method>)data;
-                for(Method method : allMethods){
+            public void onFetchDataSuccess(List<Method> data) {
+                for(Method method : data){
                     Log.d(TAG, method.name);
                 }
             }
