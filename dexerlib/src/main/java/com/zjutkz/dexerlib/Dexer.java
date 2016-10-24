@@ -25,8 +25,8 @@ public class Dexer {
 
     private Context context;
 
-    public interface OnFetchDataListener{
-        void onFetchDataSuccess(Object data);
+    public interface OnFetchDataListener<T>{
+        void onFetchDataSuccess(T data);
     }
 
     public Dexer(File file){
