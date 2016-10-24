@@ -218,8 +218,6 @@ public void get_method(View view){
 
 ######1.Support the code item
 
-######2.Support the field access flag
-
 
 
 #License

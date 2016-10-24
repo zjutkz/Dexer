@@ -1,5 +1,6 @@
 package com.zjutkz.dexerlib;
 
+import android.content.Context;
 import android.os.Handler;
 
 import com.zjutkz.dexerlib.task.DecodeTask;
@@ -21,6 +22,8 @@ public class Dexer {
 
     private DecodeThread mDecodeThread;
     private Handler mDecodeHandler;
+
+    private Context context;
 
     public interface OnFetchDataListener{
         void onFetchDataSuccess(Object data);
