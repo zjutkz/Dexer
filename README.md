@@ -212,6 +212,24 @@ public void get_method(View view){
 }
 ```
 
+7.Dumpping the dex:
+
+   7.1 In logcat
+
+```java
+public void dump(View view){
+    dexer.dumpDex();
+}
+```
+
+   7.2 In file
+
+```java
+public void dump(View view){
+    dexer.dumpDex("storage/sdcard0/dump.txt");
+}
+```
+
 
 
 #Todo
