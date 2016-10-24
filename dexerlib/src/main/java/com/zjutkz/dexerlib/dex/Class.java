@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Class {
 
-    public static int count = 1;
+    public static int count = 0;
     public String class_name;
     public int access_flags;
     public String super_class_name;
@@ -40,7 +40,7 @@ public class Class {
 
     public String dump(){
         StringBuilder sb = new StringBuilder();
-        sb.append("============" + count++ + "============" + "\n");
+        sb.append("============class " + ++count + " start============" + "\n");
         sb.append("class name: " + class_name + "\n");
         sb.append("class access_flag: " + access_flags + " (see in the AccessFlag)" + "\n");
         sb.append("super class name: " + super_class_name + "\n");
@@ -49,24 +49,30 @@ public class Class {
             sb.append(" " + interfaceName + " ");
         }
         sb.append("\n");
-        sb.append("====fields data====" + "\n");
+        sb.append("============fields data start=============" + "\n");
         for(Field field : static_fields){
             sb.append("static field: " + field.dump());
         }
         for(Field field : instance_fields){
             sb.append("instance field: " + field.dump());
         }
-        sb.append("====methods data====" + "\n");
+        sb.append("============fields data end============" + "\n");
+        sb.append("============methods data start============" + "\n");
         for(Method method : direct_methods){
             sb.append("direct method: " + method.dump());
         }
         for(Method method : virtual_methods){
             sb.append("virtual method: " + method.dump());
         }
-        sb.append("====class annotations data====" + "\n");
+        sb.append("============methods data end============" + "\n");
+        sb.append("============class annotations data start============" + "\n");
         for(Annotation annotation : annotations){
             sb.append(annotation.dump());
         }
+        sb.append("============class annotations data end============" + "\n");
+        sb.append("============class " + count + " end============" + "\n");
+        sb.append("\n");
+
         return sb.toString();
     }
 }

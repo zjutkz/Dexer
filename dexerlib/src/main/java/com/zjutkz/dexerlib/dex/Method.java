@@ -64,14 +64,16 @@ public class Method {
         sb.append("\n");
         sb.append("return type: " + returnType + "\n");
         sb.append("access flag: " + access_flag + " (see in the AccessFlag)" + "\n");
-        sb.append("========method annotations data========" + "\n");
+        sb.append("============method annotations data start============" + "\n");
         for(Annotation annotation : methodAnnotations){
             sb.append(annotation.dump());
         }
-        sb.append("========param annotations data========" + "\n");
+        sb.append("============method annotations data end============" + "\n");
+        sb.append("============param annotations data start============" + "\n");
         for(Annotation annotation : paramAnnotations){
             sb.append(annotation.dump());
         }
+        sb.append("============param annotations data end============" + "\n");
 
         return sb.toString();
     }

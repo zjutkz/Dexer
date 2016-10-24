@@ -161,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFetchDataSuccess(Object data) {
                 Method method = (Method)data;
                 Log.d(TAG, method.name);
+                Log.d(TAG, "" + method.access_flag);
                 Log.d(TAG, method.returnType);
                 for(String type : method.paramTypes){
                     Log.d(TAG, type);

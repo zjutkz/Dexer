@@ -44,10 +44,11 @@ public class Field {
         sb.append("field name: " + name + "\n");
         sb.append("field type: " + type + "\n");
         sb.append("access flag: " + access_flag + " (see in the AccessFlag)" + "\n");
-        sb.append("========field annotations data========" + "\n");
+        sb.append("============field annotations data start============" + "\n");
         for(Annotation annotation : annotations){
             sb.append(annotation.dump());
         }
+        sb.append("============field annotations data end============" + "\n");
 
         return sb.toString();
     }
