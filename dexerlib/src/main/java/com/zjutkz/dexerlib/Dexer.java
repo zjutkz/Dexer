@@ -3,12 +3,15 @@ package com.zjutkz.dexerlib;
 import android.content.Context;
 import android.os.Handler;
 
+import com.zjutkz.dexerlib.dex.Class;
+import com.zjutkz.dexerlib.dex.Method;
 import com.zjutkz.dexerlib.task.DecodeTask;
 import com.zjutkz.dexerlib.task.Task;
 import com.zjutkz.dexerlib.thread.DecodeThread;
 import com.zjutkz.dexerlib.util.FileUtil;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Created by kangzhe on 16/10/20.
@@ -76,7 +79,7 @@ public class Dexer {
         }
     }
 
-    public void getAllMethods(final OnFetchDataListener listener){
+    public void getAllMethods(final OnFetchDataListener<List<Method>> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -87,7 +90,7 @@ public class Dexer {
         });
     }
 
-    public void getAllClasses(final OnFetchDataListener listener){
+    public void getAllClasses(final OnFetchDataListener<List<Class>> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -98,7 +101,7 @@ public class Dexer {
         });
     }
 
-    public void getAllMethodsInClass(final String clzName,final OnFetchDataListener listener){
+    public void getAllMethodsInClass(final String clzName,final OnFetchDataListener<List<Method>> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -109,7 +112,7 @@ public class Dexer {
         });
     }
 
-    public void hasClass(final String clzName,final OnFetchDataListener listener){
+    public void hasClass(final String clzName,final OnFetchDataListener<Boolean> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -120,7 +123,7 @@ public class Dexer {
         });
     }
 
-    public void hasMethods(final String clzName,final String methodName,final OnFetchDataListener listener){
+    public void hasMethods(final String clzName,final String methodName,final OnFetchDataListener<Boolean> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -131,7 +134,7 @@ public class Dexer {
         });
     }
 
-    public void getClass(final String clzName,final OnFetchDataListener listener){
+    public void getClass(final String clzName,final OnFetchDataListener<Class> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -142,7 +145,7 @@ public class Dexer {
         });
     }
 
-    public void getMethod(final String clzName,final String methodName,final OnFetchDataListener listener){
+    public void getMethod(final String clzName,final String methodName,final OnFetchDataListener<Method> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -153,7 +156,7 @@ public class Dexer {
         });
     }
 
-    public void getMethodCount(final OnFetchDataListener listener){
+    public void getMethodCount(final OnFetchDataListener<Integer> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
@@ -164,7 +167,7 @@ public class Dexer {
         });
     }
 
-    public void getClassCount(final OnFetchDataListener listener){
+    public void getClassCount(final OnFetchDataListener<Integer> listener){
         getDecodeHandler().post(new Runnable() {
             @Override
             public void run() {
