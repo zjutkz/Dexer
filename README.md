@@ -230,6 +230,26 @@ public void dump(View view){
 }
 ```
 
+8.Getting methods & classes count:
+
+```java
+public void get_count(View view){
+    dexer.getClassCount(new Dexer.OnFetchDataListener() {
+        @Override
+        public void onFetchDataSuccess(Object data) {
+            Log.d(TAG, "classes count: " + data);
+        }
+    });
+
+    dexer.getMethodCount(new Dexer.OnFetchDataListener() {
+        @Override
+        public void onFetchDataSuccess(Object data) {
+            Log.d(TAG, "methods count: " + data);
+        }
+    });
+}
+```
+
 
 
 #Todo

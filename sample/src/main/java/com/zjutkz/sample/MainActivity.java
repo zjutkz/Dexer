@@ -176,6 +176,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public void get_count(View view){
+        dexer.getClassCount(new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "classes count: " + data);
+            }
+        });
+
+        dexer.getMethodCount(new Dexer.OnFetchDataListener() {
+            @Override
+            public void onFetchDataSuccess(Object data) {
+                Log.d(TAG, "methods count: " + data);
+            }
+        });
+    }
+
     public void dump(View view){
         dexer.dumpDex("storage/sdcard0/dump.txt");
     }
