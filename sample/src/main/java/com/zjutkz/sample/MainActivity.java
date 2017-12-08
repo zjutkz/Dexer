@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         dexer.getMethod("MainActivity", "onCreate", new Dexer.OnFetchDataListener<Method>() {
             @Override
             public void onFetchDataSuccess(Method data) {
-                Log.d(TAG, data.name);
+                Log.d(TAG, data.className + " " + data.name);
                 Log.d(TAG, "" + data.access_flag);
                 Log.d(TAG, data.returnType);
                 for(String type : data.paramTypes){
